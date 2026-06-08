@@ -26,9 +26,9 @@ export default async function RootLayout({
     <html lang="en">
       <body className="grid h-screen">
         <header className="bg-blue-200 text-2xl h-20 font-bold grid">
-          <p className="justify-self-center self-center">Header</p>
+          <p className="justify-self-center self-center">EEE 202 Practice</p>
         </header>
-        <div className="justify-self-center">
+        <div>
           {/* <ErrorWrapper> */}
             {children}
           {/* </ErrorWrapper> */}
