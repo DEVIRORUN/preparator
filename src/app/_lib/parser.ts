@@ -46,24 +46,13 @@ export function parseExamContent(raw: string): ParsedBlock[] {
   const lines = raw.split("\n");
   const blocks: ParsedBlock[] = [];
 
-  let i = 0;
-  while (i < lines.length) {
+  for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
     // Skip empty lines
-    if (!line) {
-      i++;
-      continue;
-    }
+    if (!line) continue;
 
-    // Divider
-    if (PATTERNS.divider.test(line)) {
-      blocks.push({ id: makeId(), type: "divider", raw: line, content: "" });
-      i++;
-      continue;
-    }
-
-    // Answer separator (ANSWER-BELOW)
+    // Answer separator
     if (PATTERNS.answerSeparator.test(line)) {
       blocks.push({
         id: makeId(),
@@ -71,11 +60,16 @@ export function parseExamContent(raw: string): ParsedBlock[] {
         raw: line,
         content: "ANSWERS",
       });
-      i++;
       continue;
     }
 
-    // Section header / answer key header
+    // Divider
+    if (PATTERNS.divider.test(line)) {
+      blocks.push({ id: makeId(), type: "divider", raw: line, content: "" });
+      continue;
+    }
+
+    // Section header
     if (PATTERNS.sectionHeader.test(line)) {
       blocks.push({
         id: makeId(),
@@ -83,7 +77,6 @@ export function parseExamContent(raw: string): ParsedBlock[] {
         raw: line,
         content: line,
       });
-      i++;
       continue;
     }
 
@@ -95,11 +88,10 @@ export function parseExamContent(raw: string): ParsedBlock[] {
         raw: line,
         content: line,
       });
-      i++;
       continue;
     }
 
-    // Display equation block  $$...$$
+    // Display equation block (single line)
     if (line.startsWith("$$") && line.endsWith("$$") && line.length > 4) {
       blocks.push({
         id: makeId(),
@@ -107,134 +99,67 @@ export function parseExamContent(raw: string): ParsedBlock[] {
         raw: line,
         content: line.slice(2, -2).trim(),
       });
-      i++;
       continue;
     }
 
-    // Multi-line display equation
+    // Multi-line equation
     if (line === "$$") {
-      let eqLines: string[] = [];
-      i++;
-      while (i < lines.length && lines[i].trim() !== "$$") {
-        eqLines.push(lines[i]);
-        i++;
+      const eqLines: string[] = [];
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() !== "$$") {
+        eqLines.push(lines[j]);
+        j++;
       }
-      i++; // skip closing $$
-      blocks.push({
-        id: makeId(),
-        type: "equation_block",
-        raw: eqLines.join("\n"),
-        content: eqLines.join("\n").trim(),
-      });
+      if (j < lines.length) {
+        blocks.push({
+          id: makeId(),
+          type: "equation_block",
+          raw: eqLines.join("\n"),
+          content: eqLines.join("\n").trim(),
+        });
+        i = j;
+      }
       continue;
     }
 
     // Given line
     if (PATTERNS.given.test(line)) {
-      // Collect multi-line Given: content until next block
-      let givenLines = [line];
-      let j = i + 1;
-      while (j < lines.length) {
-        const nextLine = lines[j].trim();
-        if (!nextLine) {
-          j++;
-          continue;
-        }
-        // Stop if we hit a new block type
-        if (
-          PATTERNS.subQuestion.test(nextLine) ||
-          PATTERNS.bullet.test(nextLine) ||
-          PATTERNS.sectionHeader.test(nextLine) ||
-          PATTERNS.questionHeader.test(nextLine)
-        ) {
-          break;
-        }
-        givenLines.push(nextLine);
-        j++;
-      }
       blocks.push({
         id: makeId(),
         type: "given_line",
-        raw: givenLines.join("\n"),
-        content: givenLines.join(" ").trim(),
+        raw: line,
+        content: line,
       });
-      i = j;
       continue;
     }
 
     // Bullet point
     const bulletMatch = line.match(PATTERNS.bullet);
     if (bulletMatch) {
-      // Collect multi-line bullet content
-      let bulletLines = [bulletMatch[1]];
-      let j = i + 1;
-      while (j < lines.length) {
-        const nextLine = lines[j].trim();
-        if (!nextLine) {
-          j++;
-          continue;
-        }
-        // Stop if we hit a new block type
-        if (
-          PATTERNS.bullet.test(nextLine) ||
-          PATTERNS.subQuestion.test(nextLine) ||
-          PATTERNS.sectionHeader.test(nextLine) ||
-          PATTERNS.questionHeader.test(nextLine)
-        ) {
-          break;
-        }
-        bulletLines.push(nextLine);
-        j++;
-      }
       blocks.push({
         id: makeId(),
         type: "bullet",
-        raw: bulletLines.join("\n"),
-        content: bulletLines.join(" ").trim(),
+        raw: line,
+        content: bulletMatch[1],
       });
-      i = j;
       continue;
     }
 
     // Sub-question a) b) c)
     const subMatch = line.match(PATTERNS.subQuestion);
     if (subMatch) {
-      // Collect multi-line sub-question content
-      let subLines = [subMatch[2]];
-      let j = i + 1;
-      while (j < lines.length) {
-        const nextLine = lines[j].trim();
-        if (!nextLine) {
-          j++;
-          continue;
-        }
-        // Stop if we hit a new sub-question, bullet, or section
-        if (
-          PATTERNS.subQuestion.test(nextLine) ||
-          PATTERNS.bullet.test(nextLine) ||
-          PATTERNS.sectionHeader.test(nextLine) ||
-          PATTERNS.questionHeader.test(nextLine) ||
-          nextLine.startsWith("$$")
-        ) {
-          break;
-        }
-        subLines.push(nextLine);
-        j++;
-      }
       blocks.push({
         id: makeId(),
         type: "sub_question",
-        raw: subLines.join("\n"),
-        content: subLines.join(" ").trim(),
+        raw: line,
+        content: subMatch[2],
         label: subMatch[1],
       });
-      i = j;
       continue;
     }
 
-    // Default: paragraph (may have inline math)
+    // Default: paragraph
     blocks.push({ id: makeId(), type: "paragraph", raw: line, content: line });
-    i++;
   }
 
   return blocks;

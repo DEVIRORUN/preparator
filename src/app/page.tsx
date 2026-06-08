@@ -66,11 +66,21 @@ export default function HomePage() {
         };
 
   const handleRender = useCallback(() => {
-    if (!input.trim()) return;
-    const parsed = parseExamContent(input);
-    setBlocks(parsed);
-    setHasRendered(true);
-    setActiveTab("output");
+    if (!input.trim()) {
+      console.warn("Input is empty");
+      return;
+    }
+    try {
+      console.log("Starting parse...", input.length, "characters");
+      const parsed = parseExamContent(input);
+      console.log("Parse complete:", parsed.length, "blocks generated");
+      setBlocks(parsed);
+      setHasRendered(true);
+      setActiveTab("output");
+    } catch (error) {
+      console.error("Parse error:", error);
+      alert("Error parsing content: " + String(error));
+    }
   }, [input]);
 
   const handleClear = () => {
@@ -132,11 +142,11 @@ export default function HomePage() {
               IdanStudy
             </h1>
             <p
-              className="text-xs mt-0.5 font-mono"
+              className="text-xs mt-1 font-mono"
               style={{ color: colors.textTertiary }}
             >
-              Engineering Exam Renderer - nonsense markup cause of AI and
-              rushing
+              Engineering Exam Renderer - nonsense markup cause of AI and rush
+              work
             </p>
           </div>
         </div>
@@ -285,7 +295,10 @@ export default function HomePage() {
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              console.log("Textarea onChange:", e.target.value.length, "chars");
+              setInput(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={PLACEHOLDER}
             spellCheck={false}
