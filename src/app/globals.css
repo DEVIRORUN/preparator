@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+.link {
+    @apply underline px-3 text-purple-600 font-semibold;
+}
+.but {
+    @apply bg-black text-white font-bold p-2 cursor-pointer rounded;
+}
+.bold {
+    @apply font-bold;
+}
+h1 {
+    @apply font-bold text-4xl;
+}
