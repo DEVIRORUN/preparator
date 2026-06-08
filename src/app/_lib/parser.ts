@@ -9,6 +9,7 @@ export type BlockType =
   | "paragraph" // plain text / mixed inline math
   | "given_line" // lines starting with Given:
   | "answer_header" // ANSWER KEY lines
+  | "answer_separator" // ANSWER-BELOW marker
   | "divider"; // --- or ===
 
 export interface ParsedBlock {
@@ -30,6 +31,7 @@ const PATTERNS = {
   equationBlock: /^\$\$(.+)\$\$$/,
   given: /^Given\s*:/i,
   divider: /^[-=]{3,}$/,
+  answerSeparator: /^ANSWER-?BELOW$/i,
   answerHeader:
     /^(SECTION\s+[A-Z]+\s*:.*SOLUTIONS?|Question\s+\d+\s*:\s*(Theory|Calculation)\s+Solutions?)/i,
 };
@@ -57,6 +59,18 @@ export function parseExamContent(raw: string): ParsedBlock[] {
     // Divider
     if (PATTERNS.divider.test(line)) {
       blocks.push({ id: makeId(), type: "divider", raw: line, content: "" });
+      i++;
+      continue;
+    }
+
+    // Answer separator (ANSWER-BELOW)
+    if (PATTERNS.answerSeparator.test(line)) {
+      blocks.push({
+        id: makeId(),
+        type: "answer_separator",
+        raw: line,
+        content: "ANSWERS",
+      });
       i++;
       continue;
     }

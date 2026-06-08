@@ -209,6 +209,30 @@ export default function ExamRenderer({
             );
           }
 
+          case "answer_separator": {
+            return (
+              <div
+                key={block.id}
+                style={{
+                  margin: "3rem 0",
+                  padding: "1.5rem",
+                  borderTopWidth: 3,
+                  borderBottomWidth: 3,
+                  borderTopColor: themeColors.accent,
+                  borderBottomColor: themeColors.accent,
+                  backgroundColor: `${themeColors.accent}10`,
+                }}
+              >
+                <p
+                  className="font-display font-bold text-center text-lg tracking-widest"
+                  style={{ color: themeColors.accent }}
+                >
+                  ✓ {block.content}
+                </p>
+              </div>
+            );
+          }
+
           case "paragraph":
           default: {
             // Check if the line looks like a bold answer/result (contains **)
